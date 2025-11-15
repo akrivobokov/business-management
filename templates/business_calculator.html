@@ -1,0 +1,408 @@
+{% load formatting %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Калькулятор собственного дела</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --brand-dark: #0b1235;
+      --brand-blue: #2743ff;
+      --brand-muted: #f4f6fb;
+      --card-radius: 18px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--brand-muted);
+      color: #0f172a;
+      margin: 0;
+    }
+
+    header {
+      background: radial-gradient(circle at top left, #1f38ff, #0d1247);
+      color: white;
+      padding: 3rem 0 4rem;
+    }
+
+    header .badge {
+      letter-spacing: 0.12em;
+    }
+
+    main {
+      margin-top: -70px;
+      padding-bottom: 4rem;
+    }
+
+    .calculator-card {
+      border-radius: var(--card-radius);
+      border: none;
+    }
+
+    .calculator-card .card-body {
+      padding: 2rem;
+    }
+
+    .form-control, .form-select {
+      border-radius: 12px;
+      border: 1px solid #d8dbe7;
+      padding: 0.85rem 1rem;
+      font-weight: 500;
+    }
+
+    label.form-label {
+      font-weight: 600;
+      color: #1e1b4b;
+    }
+
+    .summary-card {
+      border-radius: var(--card-radius);
+      border: none;
+      background: white;
+      box-shadow: 0 15px 35px rgb(15 23 42 / 6%);
+    }
+
+    .regulatory-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      height: 100%;
+    }
+
+    .law-link {
+      font-size: 0.85rem;
+    }
+
+    .summary-card h3 {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .table-container {
+      border-radius: var(--card-radius);
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgb(15 23 42 / 5%);
+    }
+
+    table thead {
+      background: #eef1ff;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    tbody tr td {
+      font-weight: 500;
+    }
+
+    .section-title {
+      font-weight: 700;
+      color: #0b1235;
+    }
+
+    .info-list li {
+      margin-bottom: 0.5rem;
+    }
+
+    @media (max-width: 767px) {
+      header {
+        text-align: center;
+      }
+
+      .summary-card h3 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <p class="badge text-uppercase bg-opacity-10 bg-white text-white rounded-pill px-3 py-2">Финансовая модель</p>
+      <div class="row align-items-center mt-3">
+        <div class="col-lg-7">
+          <h1 class="display-5 fw-bold mb-3">Калькулятор запуска собственного дела</h1>
+          <p class="lead mb-0 text-white-50">Разбейте цель по прибыли на понятные действия и контролируйте план без Excel.</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="card calculator-card shadow-sm mb-4">
+        <div class="card-body">
+          <form method="get" class="row gy-4">
+            <div class="col-md-3">
+              <label class="form-label">Желаемая прибыль в месяц, ₽</label>
+              <input type="number" step="100" min="1" class="form-control" name="monthly_profit" value="{{ monthly_profit|floatformat:0 }}">
+              <div class="form-text">Если текущий доход &lt; 100 000 ₽, начните с 150 000 ₽.</div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Рабочих дней в месяце</label>
+              <input type="number" min="1" class="form-control" name="days_in_month" value="{{ days_in_month }}">
+              <div class="form-text">30 — если продаёте ежедневно, 22 — только будни.</div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Рентабельность бизнеса, %</label>
+              <input type="number" min="1" max="99" step="0.1" class="form-control" name="margin_percent" value="{{ margin_percent|floatformat:1 }}">
+              <div class="form-text">Доля чистой прибыли до налогов в выручке.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Организационно-правовая форма</label>
+              <select class="form-select" name="opf_code">
+                {% for opf in opf_list %}
+                  <option value="{{ opf.code }}" {% if opf.code == selected_opf.code|default:'' %}selected{% endif %}>{{ opf.title }}</option>
+                {% endfor %}
+              </select>
+              {% if selected_opf.source_url %}
+                <div class="form-text">Справочник ФНС: <a href="{{ selected_opf.source_url }}" target="_blank" rel="noopener" class="text-decoration-none">{{ selected_opf.source_url }}</a></div>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Система налогообложения</label>
+              <select class="form-select" name="tax_system_code">
+                {% for system in available_tax_systems %}
+                  <option value="{{ system.code }}" {% if system.code == selected_tax_code %}selected{% endif %}>{{ system.title }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-text">Данные проверяются ежедневно{% if regulatory_snapshot.checked_at %}: {{ regulatory_snapshot.checked_at }}{% endif %}.</div>
+            </div>
+            <div class="col-12 text-end">
+              <button type="submit" class="btn btn-primary px-4 py-2 rounded-3">Пересчитать</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="row g-3 mb-4">
+        <div class="col-md-3">
+          <article class="summary-card p-4 h-100">
+            <p class="text-uppercase text-muted fw-semibold mb-2">Суточный ориентир</p>
+            <h3 class="mb-1">{{ daily_profit_target|spaced_number }} ₽</h3>
+            <p class="text-muted mb-0">Чистая прибыль в день, чтобы удержать цель.</p>
+          </article>
+        </div>
+        <div class="col-md-3">
+          <article class="summary-card p-4 h-100">
+            <p class="text-uppercase text-muted fw-semibold mb-2">Месячная цель</p>
+            <h3 class="mb-1">{{ monthly_profit|spaced_number }} ₽</h3>
+            <p class="text-muted mb-0">Сумма после расходов и налогов.</p>
+          </article>
+        </div>
+        <div class="col-md-3">
+          <article class="summary-card p-4 h-100">
+            <p class="text-uppercase text-muted fw-semibold mb-2">Годовая цель</p>
+            <h3 class="mb-1">{{ yearly_profit_goal|spaced_number }} ₽</h3>
+            <p class="text-muted mb-0">Столько приносит дело за год при текущем темпе.</p>
+          </article>
+        </div>
+        <div class="col-md-3">
+          <article class="summary-card p-4 h-100">
+            <p class="text-uppercase text-muted fw-semibold mb-2">Расходы без налогов</p>
+            <h3 class="mb-1">{{ monthly_operational_cost|spaced_number }} ₽</h3>
+            <p class="text-muted mb-0">≈ {{ daily_operational_cost|spaced_number:"2" }} ₽ в день на себестоимость.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="row g-3 mb-5">
+        <div class="col-md-6">
+          <article class="summary-card p-4 h-100">
+            <p class="text-uppercase text-muted fw-semibold mb-2">База прибыль + расходы</p>
+            <h3 class="mb-1">{{ pre_tax_monthly_base|spaced_number }} ₽</h3>
+            <p class="text-muted mb-0">Столько должно оставаться после налогов при рентабельности {{ margin_percent|floatformat:1 }}%.</p>
+          </article>
+        </div>
+        <div class="col-md-6">
+          <article class="summary-card p-4 h-100">
+            <p class="text-uppercase text-muted fw-semibold mb-2">Чистая рентабельность</p>
+            <h3 class="mb-1">{{ margin_percent|floatformat:1 }}%</h3>
+            <p class="text-muted mb-0">Каждый рубль выручки приносит {{ margin_ratio|floatformat:2 }} ₽ прибыли до налогов.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="row g-3 mb-5">
+        <div class="col-lg-5">
+          <article class="summary-card p-4 regulatory-card">
+            <p class="text-uppercase text-muted fw-semibold mb-2">Регистрация</p>
+            <h3 class="mb-1">{{ selected_opf.title }}</h3>
+            <p class="text-muted small mb-2">Доступные СНО для формы:
+              {% for system in available_tax_systems %}
+                {{ system.title }}{% if not forloop.last %}, {% endif %}
+              {% empty %}
+                —
+              {% endfor %}
+            </p>
+            {% if selected_opf.source_url %}
+              <a href="{{ selected_opf.source_url }}" target="_blank" rel="noopener" class="law-link text-decoration-none">Источник ФНС: {{ selected_opf.source_url }}</a>
+            {% endif %}
+          </article>
+        </div>
+        <div class="col-lg-7">
+          <article class="summary-card p-4 regulatory-card">
+            <p class="text-uppercase text-muted fw-semibold mb-2">Налоговый режим</p>
+            <h3 class="mb-2">{{ selected_tax_system.title|default:"Нет данных" }}</h3>
+            {% if tax_projection.daily_revenue %}
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <p class="text-muted small mb-1">Выручка в день для цели по прибыли</p>
+                  <p class="display-6 fw-bold mb-0">{{ tax_projection.daily_revenue|spaced_number:"2" }} ₽</p>
+                </div>
+                <div class="col-md-6">
+                  <p class="text-muted small mb-1">Налоговая нагрузка в день</p>
+                  <p class="display-6 fw-bold mb-0">{{ tax_projection.tax_daily|spaced_number:"2" }} ₽</p>
+                </div>
+              </div>
+              <div class="d-flex flex-wrap gap-4">
+                <div>
+                  <p class="text-muted text-uppercase small mb-1">Выручка в месяц</p>
+                  <p class="fw-semibold mb-0">{{ tax_projection.monthly_revenue|spaced_number }} ₽</p>
+                </div>
+                <div>
+                  <p class="text-muted text-uppercase small mb-1">Налог в месяц</p>
+                  <p class="fw-semibold mb-0">{{ tax_projection.tax_monthly|spaced_number }} ₽</p>
+                </div>
+                <div>
+                  <p class="text-muted text-uppercase small mb-1">Выручка в год</p>
+                  <p class="fw-semibold mb-0">{{ tax_projection.yearly_revenue|spaced_number }} ₽</p>
+                </div>
+              </div>
+              <div class="mt-3 d-flex flex-wrap gap-4">
+                <div>
+                  <p class="text-muted text-uppercase small mb-1">Расходы без налогов</p>
+                  <p class="fw-semibold mb-0">{{ pre_tax_daily_base|spaced_number:"2" }} ₽ в день</p>
+                </div>
+                <div>
+                  <p class="text-muted text-uppercase small mb-1">Налоговая доля</p>
+                  <p class="fw-semibold mb-0">{{ tax_rate_percent|floatformat:2 }}% по базе {{ selected_tax_system.basis|default:'revenue' }}</p>
+                </div>
+              </div>
+              <p class="text-muted small mb-0">Эффективная ставка: {{ tax_rate_percent|floatformat:2 }}% {% if selected_tax_system and selected_tax_system.law_reference %}по {{ selected_tax_system.law_reference }}{% endif %}</p>
+            {% else %}
+              <p class="text-muted mb-0">Выберите режим, чтобы увидеть налоговую нагрузку.</p>
+            {% endif %}
+          </article>
+        </div>
+      </section>
+
+      <section class="mb-5">
+        <h2 class="section-title h4 mb-3">Декомпозиция по продажам</h2>
+        <div class="table-container">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Суточная прибыль</th>
+                <th>Продаж в день</th>
+                <th>Чистая прибыль с продажи</th>
+                <th>Продаж в месяц</th>
+                <th>Продаж в год</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sales_breakdown %}
+                <tr>
+                  <td>{{ daily_profit_target|spaced_number }} ₽</td>
+                  <td>{{ row.sales_per_day|spaced_number }}</td>
+                  <td>{{ row.profit_per_sale|spaced_number:"2" }} ₽</td>
+                  <td>{{ row.monthly_sales|spaced_number }}</td>
+                  <td>{{ row.yearly_sales|spaced_number }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="mb-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+          <h2 class="section-title h4 mb-0">Налоговая нагрузка по выбранной форме</h2>
+          <small class="text-muted">Данные ФНС РФ, проверено {% if regulatory_snapshot.checked_at %}{{ regulatory_snapshot.checked_at }}{% else %}при загрузке{% endif %}</small>
+        </div>
+        <div class="table-container">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Система налогообложения</th>
+                <th>Ставка</th>
+                <th>Выручка в день</th>
+                <th>Налог в день</th>
+                <th>Выручка в месяц</th>
+                <th>Налог в месяц</th>
+                <th>Выручка в год</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in tax_rows %}
+                <tr>
+                  <td>
+                    <div class="fw-semibold">{{ row.title }}</div>
+                    {% if row.law_reference %}
+                      <div class="text-muted small">{{ row.law_reference }}</div>
+                    {% endif %}
+                  </td>
+                  <td>{{ row.rate_percent|floatformat:2 }}%</td>
+                  <td>{{ row.daily_revenue|spaced_number:"2" }} ₽</td>
+                  <td>{{ row.tax_daily|spaced_number:"2" }} ₽</td>
+                  <td>{{ row.monthly_revenue|spaced_number }} ₽</td>
+                  <td>{{ row.tax_monthly|spaced_number }} ₽</td>
+                  <td>{{ row.yearly_revenue|spaced_number }} ₽</td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center text-muted">Нет данных по налоговой нагрузке для выбранной формы.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if regulatory_snapshot.sources %}
+          <p class="text-muted small mt-2">Используемые источники: {% for key, value in regulatory_snapshot.sources.items %}{{ key }} — <a href="{{ value }}" target="_blank" rel="noopener">{{ value }}</a>{% if not forloop.last %}; {% endif %}{% endfor %}</p>
+        {% endif %}
+      </section>
+
+      <section class="mb-5">
+        <h2 class="section-title h4 mb-3">Требуемая выручка при разной рентабельности</h2>
+        <div class="table-container">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Рентабельность</th>
+                <th>Выручка в месяц</th>
+                <th>Выручка в год</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in profitability_rows %}
+                <tr>
+                  <td>{{ row.margin }}%</td>
+                  <td>{{ row.monthly_revenue|spaced_number }} ₽</td>
+                  <td>{{ row.yearly_revenue|spaced_number }} ₽</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <p class="text-muted small mt-2">Прибыльность &gt; 50% чаще встречается в услугах, собственном производстве и разработке ПО.</p>
+      </section>
+
+      <section class="mb-5">
+        <h2 class="section-title h4 mb-3">Как читать расчёты</h2>
+        <ul class="info-list">
+          <li>Подстраивайте количество рабочих дней под график продаж.</li>
+          <li>Понимание прибыли с одной продажи помогает оценивать нагрузку на команду и каналы продаж.</li>
+          <li>Сверяйте необходимую выручку с возможностями каналов: маркетплейсы, офлайн-точки, услуги.</li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

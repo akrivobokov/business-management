@@ -1,0 +1,14 @@
+name: business-management
+description: Conda environment for the Business Management calculator
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - Django>=4.0
+      - gunicorn
+      - whitenoise
+      - openpyxl
+      - requests
