@@ -11,3 +11,4 @@ static/
 media/
 .idea/
 .vscode/
+regulations_cache.json

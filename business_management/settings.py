@@ -2,7 +2,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-secret'
 DEBUG = True
-ALLOWED_HOSTS = ['business-management-gfzc.onrender.com']
+ALLOWED_HOSTS = ['business-management-gfzc.onrender.com', '127.0.0.1', 'localhost']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -11,6 +11,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
+    'business_management',
     'orders',
 ]
 
@@ -61,3 +63,9 @@ import os
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # 👈 куда collectstatic положит файлы
+
+REGULATORY_CACHE_FILE = BASE_DIR / 'regulations_cache.json'
+REGULATORY_SOURCES = {
+    'opf': 'https://www.nalog.gov.ru/opendata/7707329152-spravOKOPF/data-structure-7707329152-spravOKOPF.json',
+    'tax_systems': 'https://www.nalog.gov.ru/opendata/7707329152-taxsystem/data-structure-7707329152-taxsystem.json',
+}
