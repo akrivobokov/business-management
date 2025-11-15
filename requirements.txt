@@ -1,7 +1,8 @@
-Django>=4.0 
+Django>=4.0
 gunicorn
 whitenoise
 openpyxl
+requests
 
 
 
