@@ -1,8 +1,3 @@
-Django>=4.0
-gunicorn
-whitenoise
-openpyxl
-requests
-
-
-
+Django>=5.0,<6.1
+Pillow
+unidecode

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Главная | Premier Ice B2B{% endblock %}
+
+{% block content %}
+<div class="hero rounded">
+    <h1>Оптовые поставки мороженого и продуктов глубокой заморозки</h1>
+    <p class="lead">Для вас по лучшим ценам! Более 1300 наименований.</p>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12 text-center mb-4">
+        <h2>Почему мы?</h2>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Гарантия выгодной цены</h5>
+                <p class="card-text">Прямые контракты позволяют снижать цены до 20%.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">От 1 штуки</h5>
+                <p class="card-text">Заказывайте товар впрок без больших запасов.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Бесплатная доставка</h5>
+                <p class="card-text">По Москве и МО в течение 24 часов.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Оборудование</h5>
+                <p class="card-text">Бесплатная аренда холодильного оборудования.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-5">
+    <h2 class="text-center mb-4">Наши Категории</h2>
+    <div class="row g-3">
+        {% for category in categories %}
+        <div class="col-6 col-md-3">
+            <a href="{% url 'products:product_list_by_category' category.slug %}" class="btn btn-outline-primary w-100 py-3">{{ category.name }}</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
