@@ -1,60 +1,357 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Платформа строительных закупок</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>На пикселе</title>
   <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: linear-gradient(135deg, #22c55e, #14b8a6, #3b82f6, #a855f7, #f59e0b);
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
     body {
-      background-color: #f8f9fa;
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top right, #e0f2fe, transparent 35%), var(--bg);
     }
     header {
-      background-color: #002244;
-      color: white;
-      padding: 2rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
     }
-    .cta-btn {
-      margin-top: 1rem;
+    .logo { font-weight: 800; font-size: 28px; }
+    .btn {
+      border: none; border-radius: 12px; padding: 12px 18px; cursor: pointer;
+      color: #fff; font-weight: 600; background-image: var(--accent);
     }
-    footer {
-      background-color: #dee2e6;
-      padding: 1rem;
-      text-align: center;
-      font-size: 0.9rem;
+    .btn.secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+    main { max-width: 1200px; margin: 24px auto; padding: 0 16px 40px; }
+    .hero {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 24px; margin-bottom: 20px;
     }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 12px; margin-top: 16px; }
+    .stat { border: 1px solid var(--border); border-radius: 14px; padding: 12px; background: #f8fafc; }
+    .pricing { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 12px; margin: 20px 0; }
+    .price-card { border: 1px solid var(--border); border-radius: 14px; padding: 14px; background: #fff; }
+    .pixel-field {
+      background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 18px;
+    }
+    canvas { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border); }
+    .modal {
+      display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, .55);
+      align-items: center; justify-content: center; z-index: 15;
+    }
+    .modal.show { display: flex; }
+    .modal-content {
+      width: min(760px, 94vw); max-height: 90vh; overflow: auto;
+      background: #fff; border-radius: 18px; padding: 20px;
+    }
+    .form-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    input, select, textarea {
+      width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 10px; font: inherit;
+    }
+    .hidden { display: none; }
+    .banner-img { width: 100%; max-height: 320px; object-fit: contain; border: 1px solid var(--border); border-radius: 12px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .small { color: var(--muted); font-size: 14px; }
   </style>
 </head>
 <body>
-
-<header class="text-center">
-  <h1 class="display-5">Умная платформа строительных закупок</h1>
-  <p class="lead">Автоматизированный выбор материалов, логистика и прозрачные цены от производителей</p>
-  <a href="/admin" class="btn btn-light btn-lg cta-btn">Вход в админку</a>
-  <a href="/business-calculator/" class="btn btn-outline-light btn-lg cta-btn">Калькулятор бизнеса</a>
-  <a href="/orders/calculate" class="btn btn-outline-light btn-lg cta-btn">API: Рассчитать заказ</a>
+<header>
+  <div class="logo">На пикселе</div>
+  <div class="row">
+    <button class="btn secondary" id="open-random">Рандомный сайт</button>
+    <button class="btn" id="open-order">Хочу быть на пикселе</button>
+  </div>
 </header>
 
-<main class="container py-5">
-  <div class="row">
-    <div class="col-md-4">
-      <h4>Для заказчика</h4>
-      <p>Вводите объект и количество — получайте лучшее предложение по срокам, цене и доставке.</p>
+<main>
+  <section class="hero">
+    <h1>Продаём пиксели: поле {{ field_width }} × {{ field_height }}</h1>
+    <p>Минимальная неделимая ячейка: {{ cell_size }}×{{ cell_size }} пикселей. 10% от продаж команда «На пикселе» передаёт в благотворительность.</p>
+    <p class="small">Координаты размещения задаются в ячейках 10×10. Поле: {{ field_width_cells }} × {{ field_height_cells }} ячеек.</p>
+    <div class="stats">
+      <div class="stat"><strong>Общий объём:</strong><br>{{ total_cells }} ячеек</div>
+      <div class="stat"><strong>Текущих баннеров:</strong><br>{{ banners|length }}</div>
+      <div class="stat"><strong>Проверка контента:</strong><br>Только соответствие законодательству РФ</div>
     </div>
-    <div class="col-md-4">
-      <h4>Для предпринимателя</h4>
-      <p>Запустите собственное дело, рассчитайте декомпозицию прибыли и план продаж в пару кликов.</p>
-    </div>
-    <div class="col-md-4">
-      <h4>Для инвестора</h4>
-      <p>Рынок 16,8 трлн рублей. 1% проникновения = 168 млрд оборота. Платформа готова к масштабированию.</p>
-    </div>
-  </div>
+  </section>
+
+  <section class="pricing">
+    <div class="price-card"><strong>1–20 ячеек</strong><br>5000 ₽ / ячейка</div>
+    <div class="price-card"><strong>21–50 ячеек</strong><br>3000 ₽ / ячейка</div>
+    <div class="price-card"><strong>от 51 ячейки</strong><br>1500 ₽ / ячейка</div>
+  </section>
+
+  <section class="pixel-field">
+    <h3>Карта баннеров</h3>
+    <p class="small">Масштабированный превью-вид поля 3840×21600. Фактическое размещение подтверждается администратором после оплаты.</p>
+    <canvas id="pixelCanvas" width="1140" height="420" data-field-width="{{ field_width }}" data-field-height="{{ field_height }}"></canvas>
+  </section>
 </main>
 
-<footer>
-  &copy; 2025 СтройПлатформа. Все права защищены.
-</footer>
+<div class="modal" id="random-modal">
+  <div class="modal-content">
+    <h3>Рандомный сайт</h3>
+    <p class="small">Клик по изображению откроет сайт рекламодателя.</p>
+    <a id="random-link" href="#" target="_blank" rel="noopener noreferrer"><img id="random-img" class="banner-img" alt="Рандомный баннер"></a>
+    <p id="random-title"></p>
+    <div class="row">
+      <button class="btn secondary" id="prev-banner">Предыдущий</button>
+      <button class="btn secondary" id="next-banner">Следующий</button>
+      <button class="btn" data-close="random-modal">Закрыть</button>
+    </div>
+  </div>
+</div>
 
+<div class="modal" id="order-modal">
+  <div class="modal-content">
+    <h3>Хочу быть на пикселе</h3>
+    <p>Спасибо за доверие! 10% от всех продаж мы собираем в личный фонд и передаём в благотворительность.</p>
+    <form id="pixel-order-form">
+      <div class="form-grid">
+        <div>
+          <label>Тип покупателя</label>
+          <select name="buyer_type" id="buyer-type" required>
+            <option value="individual">Физлицо</option>
+            <option value="legal">Юрлицо/ИП</option>
+          </select>
+        </div>
+        <div class="individual-field">
+          <label>ФИО</label><input name="full_name" />
+        </div>
+        <div class="legal-field hidden">
+          <label>Наименование организации/ИП</label><input name="organization_name" />
+        </div>
+        <div class="legal-field hidden">
+          <label>ИНН</label><input name="inn" />
+        </div>
+        <div class="legal-field hidden">
+          <label>Email</label><input name="email" type="email" />
+        </div>
+        <div>
+          <label>Ник в Telegram</label><input name="telegram_nick" required />
+        </div>
+        <div>
+          <label>Телефон</label><input name="phone" required />
+        </div>
+        <div>
+          <label>Изображение баннера (ссылка)</label><input name="banner_image_url" type="url" required />
+        </div>
+        <div>
+          <label>Ссылка перехода</label><input name="banner_target_url" type="url" required />
+        </div>
+        <div>
+          <label>Количество ячеек</label><input name="cell_count" id="cells-input" type="number" min="1" required />
+        </div>
+        <div>
+          <label>X (ячейки)</label><input name="placement_x" id="placement-x" type="number" min="0" required />
+        </div>
+        <div>
+          <label>Y (ячейки)</label><input name="placement_y" id="placement-y" type="number" min="0" required />
+        </div>
+        <div>
+          <label>Ширина (ячейки)</label><input name="placement_width" id="placement-width" type="number" min="1" required />
+        </div>
+        <div>
+          <label>Высота (ячейки)</label><input name="placement_height" id="placement-height" type="number" min="1" required />
+        </div>
+      </div>
+      <p id="price-preview" class="small"></p>
+      <label><input type="checkbox" name="personal_data_consent" id="consent" /> Я согласен(на) на обработку персональных данных только для приобретения места на «На пикселе». Мы данные не отдаём и не продаём третьим лицам. Даже за миллиард.</label>
+      <div style="margin-top:12px" class="row">
+        <button class="btn" id="buy-btn" type="submit" disabled>Приобрести</button>
+        <button class="btn secondary" type="button" data-close="order-modal">Закрыть</button>
+      </div>
+    </form>
+    <div id="payment-result" class="hidden"></div>
+  </div>
+</div>
+
+<script>
+  const banners = {{ banners|safe }};
+  banners.forEach(b => {
+    b.placement_x = Number(b.placement_x || 0);
+    b.placement_y = Number(b.placement_y || 0);
+    b.placement_width = Number(b.placement_width || 0);
+    b.placement_height = Number(b.placement_height || 0);
+  });
+  const randomModal = document.getElementById('random-modal');
+  const orderModal = document.getElementById('order-modal');
+  const openRandom = document.getElementById('open-random');
+  const openOrder = document.getElementById('open-order');
+  let currentBanner = 0;
+
+  function toggleModal(id, show=true){
+    document.getElementById(id).classList[show ? 'add' : 'remove']('show');
+  }
+
+  function renderRandomBanner() {
+    if (!banners.length) {
+      document.getElementById('random-title').textContent = 'Баннеры пока не опубликованы администратором.';
+      document.getElementById('random-link').removeAttribute('href');
+      document.getElementById('random-img').src = '';
+      return;
+    }
+    const item = banners[currentBanner];
+    document.getElementById('random-link').href = item.target_url;
+    document.getElementById('random-img').src = item.image_url;
+    document.getElementById('random-title').textContent = item.title;
+  }
+
+  openRandom.onclick = () => {
+    if (banners.length) currentBanner = Math.floor(Math.random() * banners.length);
+    renderRandomBanner();
+    toggleModal('random-modal', true);
+  };
+  openOrder.onclick = () => toggleModal('order-modal', true);
+  document.querySelectorAll('[data-close]').forEach(btn => btn.onclick = () => toggleModal(btn.dataset.close, false));
+
+  document.getElementById('next-banner').onclick = () => { if (banners.length) { currentBanner = (currentBanner + 1) % banners.length; renderRandomBanner(); } };
+  document.getElementById('prev-banner').onclick = () => { if (banners.length) { currentBanner = (currentBanner - 1 + banners.length) % banners.length; renderRandomBanner(); } };
+
+  function calcPrice(cells){
+    const count = Number(cells || 0);
+    if (count <= 0) return 0;
+    if (count <= 20) return count * 5000;
+    if (count <= 50) return count * 3000;
+    return count * 1500;
+  }
+
+  const form = document.getElementById('pixel-order-form');
+  const buyerType = document.getElementById('buyer-type');
+  const consent = document.getElementById('consent');
+  const buyBtn = document.getElementById('buy-btn');
+  const cellsInput = document.getElementById('cells-input');
+  const placementX = document.getElementById('placement-x');
+  const placementY = document.getElementById('placement-y');
+  const placementWidth = document.getElementById('placement-width');
+  const placementHeight = document.getElementById('placement-height');
+  const paymentResult = document.getElementById('payment-result');
+
+  function updateTypeFields(){
+    const legal = buyerType.value === 'legal';
+    document.querySelectorAll('.legal-field').forEach(i => i.classList.toggle('hidden', !legal));
+    document.querySelectorAll('.individual-field').forEach(i => i.classList.toggle('hidden', legal));
+  }
+
+  function updateFormState(){
+    const data = new FormData(form);
+    const required = ['telegram_nick','phone','banner_image_url','banner_target_url','cell_count','placement_x','placement_y','placement_width','placement_height'];
+    if (buyerType.value === 'individual') required.push('full_name');
+    if (buyerType.value === 'legal') required.push('organization_name','inn','email');
+    const ok = required.every(k => (data.get(k) || '').toString().trim()) && consent.checked;
+    buyBtn.disabled = !ok;
+    document.getElementById('price-preview').textContent = `Итого к оплате: ${calcPrice(data.get('cell_count')).toLocaleString('ru-RU')} ₽`;
+  }
+
+  buyerType.onchange = () => { updateTypeFields(); updateFormState(); };
+  form.oninput = updateFormState;
+  updateTypeFields();
+  form.addEventListener('input', () => {
+    const w = Number(placementWidth.value || 0);
+    const h = Number(placementHeight.value || 0);
+    if (w > 0 && h > 0) {
+      cellsInput.value = w * h;
+    }
+  });
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const payload = Object.fromEntries(new FormData(form).entries());
+    payload.personal_data_consent = consent.checked;
+
+    const res = await fetch('/api/pixel-order/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Ошибка отправки заявки');
+      return;
+    }
+
+    let html = `<h4>Заявка №${data.order_id} принята</h4><p>${data.donation_note}</p><p><strong>Сумма:</strong> ${Number(data.amount).toLocaleString('ru-RU')} ₽</p>`;
+    if (data.payment.type === 'online') {
+      html += `<p>Выберите способ оплаты:</p><ul>${data.payment.methods.map(m => `<li>${m}</li>`).join('')}</ul>`;
+    } else {
+      html += `<p><strong>Счёт:</strong> ${data.payment.invoice_number}</p><p><strong>Покупатель:</strong> ${data.payment.buyer_name}</p><h5>Реквизиты:</h5><ul>`;
+      Object.entries(data.payment.requisites).forEach(([k,v]) => { html += `<li><strong>${k}:</strong> ${v}</li>`; });
+      html += '</ul>';
+    }
+    paymentResult.innerHTML = html;
+    paymentResult.classList.remove('hidden');
+  };
+
+  // Canvas preview
+  const canvas = document.getElementById('pixelCanvas');
+  const ctx = canvas.getContext('2d');
+  const fieldWidth = Number(canvas.dataset.fieldWidth || 3840);
+  const fieldHeight = Number(canvas.dataset.fieldHeight || 21600);
+  const scaleX = canvas.width / fieldWidth;
+  const scaleY = canvas.height / fieldHeight;
+  const colors = ['#e11d48', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'];
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0,0,1140,420);
+  ctx.strokeStyle = '#e2e8f0';
+  for (let x = 0; x <= canvas.width; x += 30) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
+  for (let y = 0; y <= canvas.height; y += 30) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); }
+  banners.forEach((b, i) => {
+    const w = b.placement_width * 10 * scaleX;
+    const h = b.placement_height * 10 * scaleY;
+    const x = b.placement_x * 10 * scaleX;
+    const y = b.placement_y * 10 * scaleY;
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fillRect(x,y,w,h);
+  });
+
+  function drawPreview(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle = '#e2e8f0';
+    for (let x = 0; x <= canvas.width; x += 30) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
+    for (let y = 0; y <= canvas.height; y += 30) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); }
+    banners.forEach((b, i) => {
+      const w = b.placement_width * 10 * scaleX;
+      const h = b.placement_height * 10 * scaleY;
+      const x = b.placement_x * 10 * scaleX;
+      const y = b.placement_y * 10 * scaleY;
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.fillRect(x,y,w,h);
+    });
+
+    const w = Number(placementWidth.value || 0);
+    const h = Number(placementHeight.value || 0);
+    const x = Number(placementX.value || 0);
+    const y = Number(placementY.value || 0);
+    if (w > 0 && h > 0) {
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x * 10 * scaleX, y * 10 * scaleY, w * 10 * scaleX, h * 10 * scaleY);
+      ctx.lineWidth = 1;
+    }
+  }
+
+  [placementX, placementY, placementWidth, placementHeight].forEach((el) => {
+    el.addEventListener('input', drawPreview);
+  });
+  drawPreview();
+</script>
 </body>
 </html>
